@@ -1,29 +1,39 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
-const playerEntriesAtSomePoint = [{
-  'player': 'X',
-  'x': 1,
-  'y': 2
-}, {
-  'player': 'O',
-  'x': 1,
-  'y': 0
-}, {
-  'player': 'X',
-  'x': 0,
-  'y': 0
-}];
+/// ToDo : Add winner logic
+///      : Add jump logic
 
 class App extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      viewingStepNumber: 0,
+      playersEntries: []
+    }
+    this.playerEntryAdded = this.playerEntryAdded.bind(this);
   };
+
+  playerEntryAdded (newEntry) {
+    if(newEntry) {
+      this.setState(function (prevState) {
+        let newPlayerEntry = prevState.playersEntries;
+        newPlayerEntry.push(newEntry);
+        console.log(newPlayerEntry);
+        return {
+          playersEntries: newPlayerEntry,
+          viewingStepNumber : prevState.viewingStepNumber + 1
+        }
+      });
+    }
+  }
 
   render() {
     return (
-      <GameScreen entries = {playerEntriesAtSomePoint}/>
+      <GameScreen 
+        entries = {this.state.playersEntries} 
+        viewingStepNumber = {this.state.viewingStepNumber}
+        playerEntryAddedCallback = {this.playerEntryAdded} />
     );
   }
 }
@@ -31,15 +41,17 @@ class App extends Component {
 class GameScreen extends React.Component {
   render () {
     return <div>
-      <GridTable entries = {this.props.entries}/>
+      <GridTable
+       entries = {this.props.entries}
+       playerEntryAddedCallback = {this.props.playerEntryAddedCallback}
+       viewingStepNumber = {this.props.viewingStepNumber} />
       <br/>
-      <GameMessage entries = {this.props.entries}/>
+      <GameMessage entries = {this.props.entries} viewingStepNumber = {this.props.viewingStepNumber}/>
     </div>;
   }
 }
 
 const getEntryAt = function (x, y, entries) {
-  console.log(entries);
   if (!entries) {
     return '.';
   }
@@ -51,66 +63,57 @@ const getEntryAt = function (x, y, entries) {
 }
 
 class GridTable extends React.Component {
-  constructor (props) {
-    super(props);
-  }
-
   render () {
     return <div className="grid-table">
-      <GridCell entry = {getEntryAt(0, 0, this.props.entries)} />
-      <GridCell entry = {getEntryAt(0, 1, this.props.entries)} />
-      <GridCell entry = {getEntryAt(0, 2, this.props.entries)} /> <br/>
-      <GridCell entry = {getEntryAt(1, 0, this.props.entries)} />
-      <GridCell entry = {getEntryAt(1, 1, this.props.entries)} />
-      <GridCell entry = {getEntryAt(1, 2, this.props.entries)} /> <br/>
-      <GridCell entry = {getEntryAt(2, 0, this.props.entries)} />
-      <GridCell entry = {getEntryAt(2, 1, this.props.entries)} />
-      <GridCell entry = {getEntryAt(2, 2, this.props.entries)} />
+      <GridCell entries = {this.props.entries} posX = '0' posY = '0' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
+      <GridCell entries = {this.props.entries} posX = '0' posY = '1' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
+      <GridCell entries = {this.props.entries} posX = '0' posY = '2' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} /> <br/>
+      <GridCell entries = {this.props.entries} posX = '1' posY = '0' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
+      <GridCell entries = {this.props.entries} posX = '1' posY = '1' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
+      <GridCell entries = {this.props.entries} posX = '1' posY = '2' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} /> <br/>
+      <GridCell entries = {this.props.entries} posX = '2' posY = '0' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
+      <GridCell entries = {this.props.entries} posX = '2' posY = '1' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
+      <GridCell entries = {this.props.entries} posX = '2' posY = '2' viewingStepNumber = {this.props.viewingStepNumber} playerEntryAddedCallback = {this.props.playerEntryAddedCallback} />
       </div>;
   }
 }
 
 class GridCell extends React.Component {
-  constructor (props) {
-    super(props);
+  createNewEntry () {
+    if(getEntryAt(this.props.posX, this.props.posY, this.props.entries) !== '.') {
+      return null;
+    }
+    return {
+      player: this.props.viewingStepNumber % 2 ? 'X' : 'O',
+      x: this.props.posX,
+      y: this.props.posY
+    }
   }
 
   render () {
-    return <span className='grid-cell'>
-      {this.props.entry}
+    return <span className='grid-cell' onClick={() => this.props.playerEntryAddedCallback(this.createNewEntry())}>
+      {getEntryAt(this.props.posX, this.props.posY, this.props.entries)}
       </span>;
   }
 }
 
-const getNextPlayer = function (entries) {
-  if(!entries || !entries.length) {
-    return 'X';
-  }
-  const lastEntryPlayer = entries[entries.length - 1].player;
-  return lastEntryPlayer === 'X' ? 'O' : 'X';
+const getNextPlayer = function (step) {
+  return step % 2 ? 'X' : 'O'
 }
 
 class GameMessage extends React.Component {
-  constructor (props) {
-    super(props);
-  }
-
   render () {
-    let currentMessage = 'Next player: ' + getNextPlayer(this.props.entries);
+    let currentMessage = 'Next player: ' + getNextPlayer(this.props.viewingStepNumber);
     return <div>
         {currentMessage}
         <br/>
         <br/>
-        <LogEntry entries = {this.props.entries}/>
+        <LogEntries entries = {this.props.entries}/>
       </div>;
   }
 }
 
-class LogEntry extends React.Component {
-  constructor (props) {
-    super(props);
-  }
-
+class LogEntries extends React.Component {
   render () {
     return (<div>
               <div>
@@ -120,25 +123,21 @@ class LogEntry extends React.Component {
               </div>
         {
           this.props.entries.map((entry, index) => {
-            return <div key={index}>
-              <button>Goto step {index}</button>
-              <span> move # {index+1} </span>
-              <br/><br/>
-              </div>
+            return <LogEntry key={index} entryIndex = {index}/>
           })
         }
       </div>);
   }
 }
 
-// class  extends React.Component {
-//   constructor (props) {
-//     super(props);
-//   }
-
-//   render () {
-//     return ;
-//   }
-// }
+class LogEntry extends React.Component {
+  render () {
+    return <div>
+      <button>Goto step {this.props.entryIndex + 1}</button>
+      <span> move # {this.props.entryIndex + 1} </span>
+      <br/><br/>
+    </div>;
+  }
+}
 
 export default App;
